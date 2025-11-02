@@ -2,17 +2,14 @@ pipeline {
     agent any
 
     environment {
-        // --- !!! REPLACE THESE LATER !!! ---
         AWS_ACCOUNT_ID = "680028182286" 
-        AWS_REGION     = "ap-south-1"     // e.g., us-east-1
-        ECR_REPO_NAME  = "my-simple-app"       // The ECR repo you will create
-        DEPLOY_CREDS   = "deploy-server-ssh-key" // Jenkins credential ID you will create
-        DEPLOY_HOST    = "ec2-65-2-71-117.ap-south-1.compute.amazonaws.com" // Public DNS of your deployment server
-        DEPLOY_USER    = "ec2-user"            // Default for Amazon Linux 2
-        // --- You also need to replace the GitHub URL in stage 1 ---
+        AWS_REGION     = "ap-south-1"     
+        ECR_REPO_NAME  = "my-simple-app"     
+        DEPLOY_CREDS   = "deploy-server-ssh-key" 
+        DEPLOY_HOST    = "ec2-65-2-71-117.ap-south-1.compute.amazonaws.com" 
+        DEPLOY_USER    = "ec2-user"         
     }
     tools {
-        // This name MUST match the name you gave it in Global Tool Configuration
         nodejs 'NodeJS-16' 
     }
 
@@ -20,7 +17,6 @@ pipeline {
         stage('1. Checkout Code') {
             steps {
                 echo 'Checking out code from GitHub...'
-                // --- !!! REPLACE THIS URL !!! ---
                 git branch: 'main', url: 'https://github.com/jabinjoshua/cicd-project.git'
             }
         }
@@ -38,7 +34,6 @@ pipeline {
             steps {
                 echo 'Building the Docker image...'
                 script {
-                    // $BUILD_NUMBER is a built-in Jenkins variable
                     dockerImage = docker.build("${ECR_REPO_NAME}:${BUILD_NUMBER}")
                 }
             }
@@ -51,16 +46,12 @@ pipeline {
                     def ecrRepoUrl = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
                     def buildTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:${BUILD_NUMBER}"
                     def latestTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:latest"
-                    
-                    // 1. Log in (this part was already working)
+
                     sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrRepoUrl}"
                     
-                    // 2. Manually tag the image we built in Stage 3
-                    //    ${dockerImage.id} is the unique ID of the "my-simple-app:5" image
                     sh "docker tag ${dockerImage.id} ${buildTag}"
                     sh "docker tag ${dockerImage.id} ${latestTag}"
 
-                    // 3. Push both tags to ECR
                     sh "docker push ${buildTag}"
                     sh "docker push ${latestTag}"
                 }
@@ -71,12 +62,9 @@ pipeline {
             steps {
                 echo 'Deploying new container to EC2...'
                 
-                // Use a script block to define a Groovy variable
                 script {
-                    // 1. Define the full image tag in Groovy
                     def buildTag = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${BUILD_NUMBER}"
                     
-                    // 2. Now use this variable inside the sshagent
                     sshagent(credentials: [DEPLOY_CREDS]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
@@ -104,14 +92,11 @@ pipeline {
     }
     
     post {
-        // Send email notifications
         success {
             echo 'Pipeline succeeded!'
-            // Add your mail step here if you want
         }
         failure {
             echo 'Pipeline failed.'
-            // Add your mail step here
         }
     }
 }
