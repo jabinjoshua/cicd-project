@@ -7,7 +7,7 @@ pipeline {
         AWS_REGION     = "ap-south-1"     // e.g., us-east-1
         ECR_REPO_NAME  = "my-simple-app"       // The ECR repo you will create
         DEPLOY_CREDS   = "deploy-server-ssh-key" // Jenkins credential ID you will create
-        DEPLOY_HOST    = "ec2-13-235-73-74.ap-south-1.compute.amazonaws.com" // Public DNS of your deployment server
+        DEPLOY_HOST    = "ec2-65-2-71-117.ap-south-1.compute.amazonaws.com" // Public DNS of your deployment server
         DEPLOY_USER    = "ec2-user"            // Default for Amazon Linux 2
         // --- You also need to replace the GitHub URL in stage 1 ---
     }
