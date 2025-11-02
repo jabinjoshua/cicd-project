@@ -49,11 +49,20 @@ pipeline {
                 echo 'Pushing image to ECR...'
                 script {
                     def ecrRepoUrl = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                    // Assumes the Jenkins server has an IAM Role for ECR access
+                    def buildTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:${BUILD_NUMBER}"
+                    def latestTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:latest"
+                    
+                    // 1. Log in (this part was already working)
                     sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrRepoUrl}"
                     
-                    dockerImage.push("${ecrRepoUrl}/${ECR_REPO_NAME}:${BUILD_NUMBER}")
-                    dockerImage.push("${ecrRepoUrl}/${ECR_REPO_NAME}:latest")
+                    // 2. Manually tag the image we built in Stage 3
+                    //    ${dockerImage.id} is the unique ID of the "my-simple-app:5" image
+                    sh "docker tag ${dockerImage.id} ${buildTag}"
+                    sh "docker tag ${dockerImage.id} ${latestTag}"
+
+                    // 3. Push both tags to ECR
+                    sh "docker push ${buildTag}"
+                    sh "docker push ${latestTag}"
                 }
             }
         }
@@ -65,18 +74,21 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
                             
+                            def ecrRepoUrl = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                            def buildTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:${BUILD_NUMBER}"
+
                             # Log in to ECR on the deployment server
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrRepoUrl}
 
                             # Stop and remove the old container
                             docker stop simple-web-app || true
                             docker rm simple-web-app || true
 
-                            # Pull the new image
-                            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:latest
+                            # Pull the new, specific build-numbered image
+                            docker pull ${buildTag}
 
-                            # Run the new container
-                            docker run -d --name simple-web-app -p 3000:3000 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:latest
+                            # Run the new container using the build-numbered image
+                            docker run -d --name simple-web-app -p 3000:3000 ${buildTag}
                         '
                     """
                 }
