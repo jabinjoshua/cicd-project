@@ -70,27 +70,34 @@ pipeline {
         stage('5. Deploy to EC2') {
             steps {
                 echo 'Deploying new container to EC2...'
-                sshagent(credentials: [DEPLOY_CREDS]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
-                            
-                            def ecrRepoUrl = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                            def buildTag = "${ecrRepoUrl}/${ECR_REPO_NAME}:${BUILD_NUMBER}"
+                
+                // Use a script block to define a Groovy variable
+                script {
+                    // 1. Define the full image tag in Groovy
+                    def buildTag = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${BUILD_NUMBER}"
+                    
+                    // 2. Now use this variable inside the sshagent
+                    sshagent(credentials: [DEPLOY_CREDS]) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
+                                
+                                # Log in to ECR on the deployment server
+                                # We can pass the region and account ID
+                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-                            # Log in to ECR on the deployment server
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ecrRepoUrl}
+                                # Stop and remove the old container
+                                docker stop simple-web-app || true
+                                docker rm simple-web-app || true
 
-                            # Stop and remove the old container
-                            docker stop simple-web-app || true
-                            docker rm simple-web-app || true
+                                # Pull the new image using the full tag
+                                # The 'buildTag' variable will be expanded by Groovy BEFORE ssh is called
+                                docker pull ${buildTag}
 
-                            # Pull the new, specific build-numbered image
-                            docker pull ${buildTag}
-
-                            # Run the new container using the build-numbered image
-                            docker run -d --name simple-web-app -p 3000:3000 ${buildTag}
-                        '
-                    """
+                                # Run the new container
+                                docker run -d --name simple-web-app -p 3000:3000 ${buildTag}
+                            '
+                        """
+                    }
                 }
             }
         }
