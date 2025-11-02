@@ -11,6 +11,10 @@ pipeline {
         DEPLOY_USER    = "ec2-user"            // Default for Amazon Linux 2
         // --- You also need to replace the GitHub URL in stage 1 ---
     }
+    tools {
+        // This name MUST match the name you gave it in Global Tool Configuration
+        nodejs 'NodeJS-16' 
+    }
 
     stages {
         stage('1. Checkout Code') {
