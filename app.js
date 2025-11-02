@@ -4,7 +4,7 @@ const PORT = 3000;
 
 app.get('/', (req, res) => {
   // We'll change this text later to test the pipeline
-  res.send('Hello, World! This is version 1.'); 
+  res.send('Hello, World! This is version 2.'); 
 });
 
 app.get('/health', (req, res) => {
