@@ -3,11 +3,11 @@ pipeline {
 
     environment {
         // --- !!! REPLACE THESE LATER !!! ---
-        AWS_ACCOUNT_ID = "YOUR_AWS_ACCOUNT_ID" 
-        AWS_REGION     = "YOUR_AWS_REGION"     // e.g., us-east-1
+        AWS_ACCOUNT_ID = "680028182286" 
+        AWS_REGION     = "ap-south-1"     // e.g., us-east-1
         ECR_REPO_NAME  = "my-simple-app"       // The ECR repo you will create
         DEPLOY_CREDS   = "deploy-server-ssh-key" // Jenkins credential ID you will create
-        DEPLOY_HOST    = "YOUR_DEPLOYMENT_EC2_DNS" // Public DNS of your deployment server
+        DEPLOY_HOST    = "ec2-13-235-73-74.ap-south-1.compute.amazonaws.com" // Public DNS of your deployment server
         DEPLOY_USER    = "ec2-user"            // Default for Amazon Linux 2
         // --- You also need to replace the GitHub URL in stage 1 ---
     }
@@ -17,7 +17,7 @@ pipeline {
             steps {
                 echo 'Checking out code from GitHub...'
                 // --- !!! REPLACE THIS URL !!! ---
-                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git'
+                git branch: 'main', url: 'https://github.com/jabinjoshua/cicd-project.git'
             }
         }
 
