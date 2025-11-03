@@ -3,7 +3,7 @@ const app = express();
 const PORT = 3000;
 
 // --- Update this version number every time you deploy ---
-const VERSION = "500 Please work"; 
+const VERSION = "Email test: 998"; 
 
 app.get('/', (req, res) => {
   
