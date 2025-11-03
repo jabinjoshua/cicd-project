@@ -94,8 +94,8 @@ pipeline {
     post {
         success {
             echo 'Pipeline succeeded! Sending SNS notification...'
-            snsNotify (
-                credentialsId: 'aws-sns-creds', 
+            amazonSnsBuildNotifier (
+                credentialsId: 'aws-sns-creds',
                 region: 'ap-south-1',         
                 topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications',
                 subject: "✅ SUCCESS: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
@@ -104,10 +104,10 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed. Sending SNS notification...'
-            snsNotify (
+            amazonSnsBuildNotifier (
                 credentialsId: 'aws-sns-creds',
                 region: 'ap-south-1',
-                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications', 
+                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications',
                 subject: "❌ FAILURE: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
                 message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED. Check console: ${env.BUILD_URL}"
             )
