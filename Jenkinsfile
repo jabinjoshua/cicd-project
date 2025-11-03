@@ -93,10 +93,22 @@ pipeline {
     
     post {
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Pipeline succeeded! Sending success email...'
+            emailext (
+                subject: "✅ SUCCESS: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
+                body: """<p>Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' finished successfully.</p>
+                         <p>View the build here: ${env.BUILD_URL}</p>""",
+                to: "jabinjoshua.s@gmail.com"
+            )
         }
         failure {
-            echo 'Pipeline failed.'
+            echo 'Pipeline failed. Sending failure email...'
+            emailext (
+                subject: "❌ FAILURE: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
+                body: """<p>Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED.</p>
+                         <p>View the build and check the console output here: ${env.BUILD_URL}</p>""",
+                to: "jabinjoshua.s@gmail.com"
+            )
         }
     }
 }
