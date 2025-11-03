@@ -93,21 +93,23 @@ pipeline {
     
     post {
         success {
-            echo 'Pipeline succeeded! Sending success email...'
-            emailext (
+            echo 'Pipeline succeeded! Sending SNS notification...'
+            snsNotify (
+                credentialsId: 'aws-sns-creds', 
+                region: 'ap-south-1',         
+                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications',
                 subject: "✅ SUCCESS: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
-                body: """<p>Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' finished successfully.</p>
-                         <p>View the build here: ${env.BUILD_URL}</p>""",
-                to: "jabinjoshua.s@gmail.com"
+                message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' finished successfully."
             )
         }
         failure {
-            echo 'Pipeline failed. Sending failure email...'
-            emailext (
+            echo 'Pipeline failed. Sending SNS notification...'
+            snsNotify (
+                credentialsId: 'aws-sns-creds',
+                region: 'ap-south-1',
+                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications', 
                 subject: "❌ FAILURE: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
-                body: """<p>Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED.</p>
-                         <p>View the build and check the console output here: ${env.BUILD_URL}</p>""",
-                to: "jabinjoshua.s@gmail.com"
+                message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED. Check console: ${env.BUILD_URL}"
             )
         }
     }
