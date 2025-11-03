@@ -92,25 +92,27 @@ pipeline {
     }
     
     post {
-        success {
-            echo 'Pipeline succeeded! Sending SNS notification...'
-            amazonSnsBuildNotifier (
-                credentialsId: 'aws-sns-creds',
-                region: 'ap-south-1',         
-                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications',
-                subject: "✅ SUCCESS: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
-                message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' finished successfully."
-            )
-        }
-        failure {
-            echo 'Pipeline failed. Sending SNS notification...'
-            amazonSnsBuildNotifier (
-                credentialsId: 'aws-sns-creds',
-                region: 'ap-south-1',
-                topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications',
-                subject: "❌ FAILURE: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
-                message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED. Check console: ${env.BUILD_URL}"
-            )
-        }
+    success {
+        echo 'Pipeline succeeded! Sending SNS notification...'
+        // Use the correct command: snsnotify
+        snsnotify (
+            credentialsId: 'aws-sns-creds', // The ID you set in Jenkins
+            region: 'ap-south-1',           // Your AWS region
+            topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications', // Your SNS Topic ARN
+            subject: "✅ SUCCESS: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
+            message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' finished successfully."
+        )
     }
+    failure {
+        echo 'Pipeline failed. Sending SNS notification...'
+        // Use the correct command: snsnotify
+        snsnotify (
+            credentialsId: 'aws-sns-creds',
+            region: 'ap-south-1',
+            topicArn: 'arn:aws:sns:ap-south-1:680028182286:jenkins-pipeline-notifications', // Your SNS Topic ARN
+            subject: "❌ FAILURE: Pipeline '${env.JOB_NAME}' - Build #${env.BUILD_NUMBER}",
+            message: "Build #${env.BUILD_NUMBER} for pipeline '${env.JOB_NAME}' FAILED. Check console: ${env.BUILD_URL}"
+        )
+    }
+}
 }
